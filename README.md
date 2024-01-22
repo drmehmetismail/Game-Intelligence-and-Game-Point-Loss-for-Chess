@@ -6,7 +6,10 @@ For quick calculation of Game Intelligence (GI) and Game Point Loss (GPL) in che
 2. `stockfish_pgn_annotator.py`: Annotates PGN files with Stockfish evaluations and outputs the annotated PGN.
 
 ## Reference
-For the full implementation and more information, see https://github.com/drmehmetismail/Performance-Metrics and https://doi.org/10.48550/arXiv.2302.13937.
+- For more information, see https://doi.org/10.48550/arXiv.2302.13937
+- For World Championship and super GM games, see https://github.com/drmehmetismail/Performance-Metrics
+- For Engine vs Engine games (CCRL), see https://github.com/drmehmetismail/Engine-vs-engine-chess-stats
+- For Lichess games, see https://github.com/drmehmetismail/Chess-Data-Processing
 
 ## Citation
 Please cite the following paper if you find this helpful.
