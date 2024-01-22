@@ -1,5 +1,5 @@
 """
-This script inputs the PGN files and outputs a JSON file including calculations of stats such as GI, GPL, ACPL, etc. for each game. 
+This script inputs the PGN files with games annotated with Stockfish and outputs a JSON file including calculations of stats such as GI, GPL, ACPL, etc. for each game. 
 """
 
 import chess
