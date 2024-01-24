@@ -9,7 +9,7 @@ import json
 import os
 from chess.engine import Cp, Wdl
 import time
-import sys
+
 
 # Function to extract the evaluation from a node
 def extract_eval_from_node(node):
@@ -64,7 +64,7 @@ def calculate_gi_by_result(white_gpl, black_gpl, game_result, postmove_exp_white
     return white_gi, black_gi
 
 # Function to calculate GI and GPL in the usual way
-def gi_and_gpl(pawns_list, game_result):
+def gi_and_gpl(pawns_list, game_result, WhiteElo, BlackElo):
     white_gpl, black_gpl = 0, 0
     white_gi, black_gi = 0, 0
     white_move_number, black_move_number = 0, 0
@@ -99,15 +99,15 @@ def gi_and_gpl(pawns_list, game_result):
             black_move_number += 1
     # Calculate GI based on game result
     white_gi, black_gi = calculate_gi_by_result(white_gpl, black_gpl, game_result, postmove_exp_white, postmove_exp_black)
+    # Adjust the GI scores with respect to the opponent's rating (if applicable)
+    if WhiteElo is not None and BlackElo is not None:
+        white_gi = calculate_adjusted_gi(white_gi, BlackElo, 2800)
+        black_gi = calculate_adjusted_gi(black_gi, WhiteElo, 2800)
     # Record raw GIs
     white_gi_raw, black_gi_raw = white_gi, black_gi
-    # Adjust the GI scores with respect to the opponent's rating (if applicable), given reference_elo = 2800 (beating whom equals 1 point)
-    white_gi = calculate_adjusted_gi(white_gi, black_elo, 2800)
-    black_gi = calculate_adjusted_gi(black_gi, white_elo, 2800)
     # Normalize GI
     white_gi = calculate_normalized_gi(white_gi)
     black_gi = calculate_normalized_gi(black_gi)
-
     return white_gi, black_gi, white_gpl, black_gpl, white_gi_raw, black_gi_raw, white_move_number, black_move_number-1
 
 # Function to calculate the expected value of a position
@@ -122,9 +122,9 @@ def calculate_expected_value(win_prob, draw_prob, loss_prob, turn):
 
 # Calculate normalized GI score
 def calculate_normalized_gi(gi):
-    # set a and b for normalized_gi = a * gi + b
+    # set a and b for normalized_gi = a + b *gi
     a, b = 157.57, 18.55
-    return a * gi + b
+    return a  + b* gi
     
 # Adjust the GI score with respect to the opponent's rating
 def calculate_adjusted_gi(gi, opponent_elo, reference_elo):
@@ -147,8 +147,7 @@ def main(input_pgn_dir, output_json_dir):
                 pgn_file_path = os.path.join(dirpath, filename)
                 json_file_name = filename.replace('.pgn', '.json')
                 output_json_path = os.path.join(output_json_dir, json_file_name)
-                file_encoding = detect_encoding(pgn_file_path)
-                with open(pgn_file_path, encoding=file_encoding, errors='replace') as pgn:
+                with open(pgn_file_path) as pgn:
                     while True:
                         game = chess.pgn.read_game(pgn)
                         if game is None:
@@ -180,7 +179,9 @@ def main(input_pgn_dir, output_json_dir):
                             "BlackResult": blackResult,
                             "Date": game.headers.get("Date", None),
                                 }
-
+                        # Get the ELO ratings of the players as integers
+                        WhiteElo = int(game.headers.get("WhiteElo", None)) if game.headers.get("WhiteElo", None) else None
+                        BlackElo = int(game.headers.get("BlackElo", None)) if game.headers.get("BlackElo", None) else None
                         pawns_list = extract_pawn_evals_from_pgn(game)
                         white_acpl, black_acpl = calculate_acpl(pawns_list)
 
@@ -188,7 +189,7 @@ def main(input_pgn_dir, output_json_dir):
                         #white_moves = len(pawns_list) - 1 - black_moves
 
                         # Calculate GI and GPL for both players
-                        white_gi, black_gi, white_gpl, black_gpl, white_gi_raw, black_gi_raw, white_move_number, black_move_number = gi_and_gpl(pawns_list, game_result)
+                        white_gi, black_gi, white_gpl, black_gpl, white_gi_raw, black_gi_raw, white_move_number, black_move_number = gi_and_gpl(pawns_list, game_result, WhiteElo, BlackElo)
                         key = key_counter
                         game_data = {
                             "white_gi": round(white_gi, 4), "black_gi": round(black_gi, 4),
@@ -206,6 +207,7 @@ def main(input_pgn_dir, output_json_dir):
                     print(f"Aggregated data saved to {output_json_path}")
     print(f"#Games = {key_counter - 1}")
 
+    
 if __name__ == "__main__":
     start_time = time.time()
     input_pgn_dir = ''
