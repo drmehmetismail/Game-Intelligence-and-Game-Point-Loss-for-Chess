@@ -101,6 +101,9 @@ def gi_and_gpl(pawns_list, game_result):
     white_gi, black_gi = calculate_gi_by_result(white_gpl, black_gpl, game_result, postmove_exp_white, postmove_exp_black)
     # Record raw GIs
     white_gi_raw, black_gi_raw = white_gi, black_gi
+    # Adjust the GI scores with respect to the opponent's rating (if applicable), given reference_elo = 2800 (beating whom equals 1 point)
+    white_gi = calculate_adjusted_gi(white_gi, black_elo, 2800)
+    black_gi = calculate_adjusted_gi(black_gi, white_elo, 2800)
     # Normalize GI
     white_gi = calculate_normalized_gi(white_gi)
     black_gi = calculate_normalized_gi(black_gi)
@@ -120,9 +123,17 @@ def calculate_expected_value(win_prob, draw_prob, loss_prob, turn):
 # Calculate normalized GI score
 def calculate_normalized_gi(gi):
     # set a and b for normalized_gi = a * gi + b
-    a, b = 141.3, 27.4
+    a, b = 157.57, 18.55
     return a * gi + b
+    
+# Adjust the GI score with respect to the opponent's rating
+def calculate_adjusted_gi(gi, opponent_elo, reference_elo):
+    return gi - (1 - 2 * expected_score(opponent_elo, reference_elo)) * abs(gi)
 
+# Adjust the GI score with respect to the opponent's rating
+def expected_score(opponent_elo, reference_elo):
+    return 1 / (1 + 10 ** ((reference_elo - opponent_elo) / 400))
+    
 def main(input_pgn_dir, output_json_dir):
     # Ensure the output directory exists
     if not os.path.exists(output_json_dir):
