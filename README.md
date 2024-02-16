@@ -1,4 +1,4 @@
-# Game-Intelligence-and-Game-Point-Loss-for-Chess
+# Game-Intelligence-for-Chess
 For quick calculation of Game Intelligence (GI) and Game Point Loss (GPL) in chess games for a given .PGN file. 
 
 ## Scripts
