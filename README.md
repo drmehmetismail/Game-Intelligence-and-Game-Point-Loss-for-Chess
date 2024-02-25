@@ -2,8 +2,9 @@
 For quick calculation of Game Intelligence (GI) and Game Point Loss (GPL) in chess games for a given .PGN file. 
 
 ## Scripts
-1. `pgn_evaluation_fast_analyzer.py`: Analyzes Stockfish-annotated PGN files and outputs a JSON file with the stats.
-2. `stockfish_pgn_annotator.py`: Annotates PGN files with Stockfish evaluations and outputs the annotated PGN.
+1. `main.py`: main script.
+2. `pgn_evaluation_fast_analyzer.py`: Analyzes Stockfish-annotated PGN files and outputs a JSON file with the stats.
+3. `stockfish_pgn_annotator.py`: Annotates PGN files with Stockfish evaluations and outputs the annotated PGN.
 
 ## Reference
 - For more information, see https://doi.org/10.48550/arXiv.2302.13937
