@@ -67,7 +67,7 @@ def calculate_gi_by_result(white_gpl, black_gpl, game_result, wdl_values, postmo
     return white_gi, black_gi
 
 # Function to calculate GI and GPL in the usual way
-def gi_and_gpl(pawns_list, game_result, WhiteElo, BlackElo, wdl_values):
+def gi_and_gpl(pawns_list, game_result, WhiteElo, BlackElo, wdl_values, weighted):
     white_gpl, black_gpl = 0, 0
     white_gi, black_gi = 0, 0
     white_move_number, black_move_number = 0, 0
@@ -105,8 +105,8 @@ def gi_and_gpl(pawns_list, game_result, WhiteElo, BlackElo, wdl_values):
     # Normalize GPLs to the standard 1,0.5,0 scoring system.
     white_gpl = white_gpl / wdl_values[0]
     black_gpl = black_gpl / wdl_values[0]
-    # Adjust the GI scores with respect to the opponent's rating (if applicable)
-    if WhiteElo is not None and BlackElo is not None:
+    # Adjust the GI scores with respect to the opponent's rating (if weighted is True)
+    if weighted and WhiteElo is not None and BlackElo is not None:
         white_gi = calculate_adjusted_gi(white_gi, BlackElo, 2800)
         black_gi = calculate_adjusted_gi(black_gi, WhiteElo, 2800)
     # Record raw GIs
@@ -141,7 +141,7 @@ def calculate_adjusted_gi(gi, opponent_elo, reference_elo):
 def expected_score(opponent_elo, reference_elo):
     return 1 / (1 + 10 ** ((reference_elo - opponent_elo) / 400))
     
-def main(input_pgn_dir, output_json_dir, wdl_values):
+def main(input_pgn_dir, output_json_dir, wdl_values, weighted):
     # Ensure the output directory exists
     if not os.path.exists(output_json_dir):
         os.makedirs(output_json_dir)
@@ -196,7 +196,7 @@ def main(input_pgn_dir, output_json_dir, wdl_values):
                         #white_moves = len(pawns_list) - 1 - black_moves
 
                         # Calculate GI and GPL for both players
-                        white_gi, black_gi, white_gpl, black_gpl, white_gi_raw, black_gi_raw, white_move_number, black_move_number = gi_and_gpl(pawns_list, game_result, WhiteElo, BlackElo, wdl_values)
+                        white_gi, black_gi, white_gpl, black_gpl, white_gi_raw, black_gi_raw, white_move_number, black_move_number = gi_and_gpl(pawns_list, game_result, WhiteElo, BlackElo, wdl_values, weighted)
                         key = key_counter
                         game_data = {
                             "white_gi": round(white_gi, 4), "black_gi": round(black_gi, 4),
