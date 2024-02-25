@@ -46,25 +46,28 @@ def calculate_acpl(pawns_list):
     black_acpl = sum(black_losses) / len(black_losses) if black_losses else 0
     return white_acpl, black_acpl
 
-def calculate_gi_by_result(white_gpl, black_gpl, game_result, postmove_exp_white, postmove_exp_black):
+def calculate_gi_by_result(white_gpl, black_gpl, game_result, wdl_values, postmove_exp_white, postmove_exp_black):
+    win_value, draw_value, loss_value = wdl_values[0], wdl_values[1], wdl_values[2]
     # Calculate GI based on game result
     if game_result == '1/2-1/2':
-        white_gi = 0.5 - white_gpl
-        black_gi = 0.5 - black_gpl
+        white_gi = draw_value - white_gpl
+        black_gi = draw_value - black_gpl
     elif game_result == '1-0':
-        white_gi = 1 - white_gpl
-        black_gi = -black_gpl
+        white_gi = win_value - white_gpl
+        black_gi = loss_value - black_gpl
     elif game_result == '0-1':
-        black_gi = 1 - black_gpl
-        white_gi = -white_gpl
+        black_gi = win_value - black_gpl
+        white_gi = loss_value - white_gpl
     else:
         white_gi = postmove_exp_white - white_gpl
         black_gi = postmove_exp_black - black_gpl
-
+    # Normalize GI scores to the standard 1,0.5,0 scoring system.
+    white_gi = white_gi / win_value
+    black_gi = black_gi / win_value
     return white_gi, black_gi
 
 # Function to calculate GI and GPL in the usual way
-def gi_and_gpl(pawns_list, game_result, WhiteElo, BlackElo):
+def gi_and_gpl(pawns_list, game_result, WhiteElo, BlackElo, wdl_values):
     white_gpl, black_gpl = 0, 0
     white_gi, black_gi = 0, 0
     white_move_number, black_move_number = 0, 0
@@ -81,12 +84,12 @@ def gi_and_gpl(pawns_list, game_result, WhiteElo, BlackElo):
         # Calculate expected values before the move
         win_draw_loss = premove_eval.wdl()
         win_prob, draw_prob, loss_prob = win_draw_loss.wins / 1000, win_draw_loss.draws / 1000, win_draw_loss.losses / 1000
-        premove_exp_white, premove_exp_black = calculate_expected_value(win_prob, draw_prob, loss_prob, turn)
+        premove_exp_white, premove_exp_black = calculate_expected_value(win_prob, draw_prob, loss_prob, turn, wdl_values)
 
         # Calculate expected values after the move
         win_draw_loss = postmove_eval.wdl()
         win_prob, draw_prob, loss_prob = win_draw_loss.wins / 1000, win_draw_loss.draws / 1000, win_draw_loss.losses / 1000
-        postmove_exp_white, postmove_exp_black = calculate_expected_value(win_prob, draw_prob, loss_prob, turn)
+        postmove_exp_white, postmove_exp_black = calculate_expected_value(win_prob, draw_prob, loss_prob, turn, wdl_values)
 
         # Calculate GPL and update move number
         if turn == "Black":
@@ -98,7 +101,10 @@ def gi_and_gpl(pawns_list, game_result, WhiteElo, BlackElo):
             black_gpl += exp_black_point_loss
             black_move_number += 1
     # Calculate GI based on game result
-    white_gi, black_gi = calculate_gi_by_result(white_gpl, black_gpl, game_result, postmove_exp_white, postmove_exp_black)
+    white_gi, black_gi = calculate_gi_by_result(white_gpl, black_gpl, game_result, wdl_values, postmove_exp_white, postmove_exp_black)
+    # Normalize GPLs to the standard 1,0.5,0 scoring system.
+    white_gpl = white_gpl / wdl_values[0]
+    black_gpl = black_gpl / wdl_values[0]
     # Adjust the GI scores with respect to the opponent's rating (if applicable)
     if WhiteElo is not None and BlackElo is not None:
         white_gi = calculate_adjusted_gi(white_gi, BlackElo, 2800)
@@ -111,13 +117,14 @@ def gi_and_gpl(pawns_list, game_result, WhiteElo, BlackElo):
     return white_gi, black_gi, white_gpl, black_gpl, white_gi_raw, black_gi_raw, white_move_number, black_move_number-1
 
 # Function to calculate the expected value of a position
-def calculate_expected_value(win_prob, draw_prob, loss_prob, turn):
+def calculate_expected_value(win_prob, draw_prob, loss_prob, turn, wdl_values):
+    win_value, draw_value, loss_value = wdl_values[0], wdl_values[1], wdl_values[2]
     if turn == "White":
-        expected_value_white = win_prob * 1 + draw_prob * 0.5
-        expected_value_black = loss_prob * 1 + draw_prob * 0.5
+        expected_value_white = win_prob * win_value + draw_prob * draw_value
+        expected_value_black = loss_prob * win_value + draw_prob * draw_value
     else:
-        expected_value_white = loss_prob * 1 + draw_prob * 0.5
-        expected_value_black = win_prob * 1 + draw_prob * 0.5
+        expected_value_white = loss_prob * win_value + draw_prob * draw_value
+        expected_value_black = win_prob * win_value + draw_prob * draw_value
     return expected_value_white, expected_value_black
 
 # Calculate normalized GI score
@@ -134,7 +141,7 @@ def calculate_adjusted_gi(gi, opponent_elo, reference_elo):
 def expected_score(opponent_elo, reference_elo):
     return 1 / (1 + 10 ** ((reference_elo - opponent_elo) / 400))
     
-def main(input_pgn_dir, output_json_dir):
+def main(input_pgn_dir, output_json_dir, wdl_values):
     # Ensure the output directory exists
     if not os.path.exists(output_json_dir):
         os.makedirs(output_json_dir)
@@ -189,7 +196,7 @@ def main(input_pgn_dir, output_json_dir):
                         #white_moves = len(pawns_list) - 1 - black_moves
 
                         # Calculate GI and GPL for both players
-                        white_gi, black_gi, white_gpl, black_gpl, white_gi_raw, black_gi_raw, white_move_number, black_move_number = gi_and_gpl(pawns_list, game_result, WhiteElo, BlackElo)
+                        white_gi, black_gi, white_gpl, black_gpl, white_gi_raw, black_gi_raw, white_move_number, black_move_number = gi_and_gpl(pawns_list, game_result, WhiteElo, BlackElo, wdl_values)
                         key = key_counter
                         game_data = {
                             "white_gi": round(white_gi, 4), "black_gi": round(black_gi, 4),
@@ -206,13 +213,3 @@ def main(input_pgn_dir, output_json_dir):
                         json.dump(aggregated_data, f, indent=4)                        
                     print(f"Aggregated data saved to {output_json_path}")
     print(f"#Games = {key_counter - 1}")
-
-    
-if __name__ == "__main__":
-    start_time = time.time()
-    input_pgn_dir = ''
-    # Change the output directory if needed
-    output_json_dir = input_pgn_dir
-    main(input_pgn_dir, output_json_dir)
-    end_time = time.time()
-    print("Script finished in {:.2f} minutes".format((end_time - start_time) / 60.0))
