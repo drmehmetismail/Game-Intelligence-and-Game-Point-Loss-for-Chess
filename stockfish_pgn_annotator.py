@@ -60,7 +60,7 @@ def annotate_game_with_scores(game, scores, file_path, output_directory, input_d
         exporter = chess.pgn.FileExporter(annotated_pgn)
         game.accept(exporter)
         
-def main(input_dir_path, output_directory, stockfish_path, DEPTH):
+def main_stockfish(input_dir_path, output_directory, stockfish_path, DEPTH):
     for subdir, dirs, files in os.walk(input_dir_path):
         for file in files:
             if file.endswith(".pgn"):
