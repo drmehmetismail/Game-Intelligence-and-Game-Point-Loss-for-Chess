@@ -60,25 +60,9 @@ def annotate_game_with_scores(game, scores, file_path, output_directory, input_d
         exporter = chess.pgn.FileExporter(annotated_pgn)
         game.accept(exporter)
         
-def main():
-    start_time = time.time()
-
-    DEPTH = 10
-    
-    # Set the paths
-    input_dir_path = ''
-    output_directory = ''
-    # e.g.: 'C:\...\stockfish-windows-x86-64-avx2\stockfish\stockfish-windows-x86-64-avx2.exe'
-    stockfish_path = ''
-
+def main(input_dir_path, output_directory, stockfish_path, DEPTH):
     for subdir, dirs, files in os.walk(input_dir_path):
         for file in files:
             if file.endswith(".pgn"):
                 file_path = os.path.join(subdir, file)
                 analyze_game_with_stockfish(file_path, stockfish_path, DEPTH, output_directory, input_dir_path)
-
-    end_time = time.time()
-    print("Script finished in {:.2f} minutes".format((end_time - start_time) / 60.0))
-
-if __name__ == "__main__":
-    main()
