@@ -29,6 +29,7 @@ output_json_dir = input_pgn_dir
 # Set whether the GI score should be weighted by opponent's Elo
 weighted = True
 # Input win, draw, and loss values. Standard FIDE: [1, 0.5, 0]. Norway Chess: [3, 1.25, 0] (will be normalized by 1/3; Armageddon score added manually).
+# In case of Norway Chess with Armageddon (weighted: False), correct raw_GI score by 157.57 +18.55*(raw_GI+armageddon_score/total_games)
 wdl_values = [1, 0.5, 0]
 main(input_pgn_dir, output_json_dir, wdl_values, weighted)
 
