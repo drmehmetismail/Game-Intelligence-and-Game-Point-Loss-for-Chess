@@ -31,7 +31,7 @@ def extract_pawn_evals_from_pgn(game):
     if len(pawns_list) > 1:
         pawns_list[0] = pawns_list[1]
     #print("pawns_list: ", pawns_list)
-    return pawns_list
+    return pawns_list if pawns_list else None
 
 # Function to calculate the ACPL for both players
 def calculate_acpl(pawns_list):
@@ -190,6 +190,8 @@ def main(input_pgn_dir, output_json_dir, wdl_values, weighted):
                         WhiteElo = int(game.headers.get("WhiteElo", None)) if game.headers.get("WhiteElo", None) else None
                         BlackElo = int(game.headers.get("BlackElo", None)) if game.headers.get("BlackElo", None) else None
                         pawns_list = extract_pawn_evals_from_pgn(game)
+                        if pawns_list is None or len(pawns_list) < 2:  # Skip this game if no evaluations are available
+                            continue
                         white_acpl, black_acpl = calculate_acpl(pawns_list)
 
                         #black_moves = (len(pawns_list) - 1) // 2
