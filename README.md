@@ -1,5 +1,5 @@
 # Game-Intelligence-for-Chess
-For quick calculation of Game Intelligence (GI) and Game Point Loss (GPL) in chess games for a given .PGN file. 
+For quick calculation of Game Intelligence (GI) and Game Point Loss (GPL) or Missed Points in chess games for a given .PGN file. 
 
 ## Scripts
 1. `main.py`: main script.
