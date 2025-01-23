@@ -109,7 +109,7 @@ def save_to_csv(df, file_path):
     df.to_csv(file_path, index=False)
 
 # Main Functionality
-def main(csv_all_games_path, player_stats_output_dir):
+def main_stats(csv_all_games_path, player_stats_output_dir):
     if not os.path.exists(csv_all_games_path):
         print(f"File not found: {csv_all_games_path}")
         return
